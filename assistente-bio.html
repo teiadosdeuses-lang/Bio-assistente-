@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="BioAssist">
+<title>BioAssist — Seu Assistente</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0f0d;
+    --surface: #111a14;
+    --card: #162019;
+    --border: #1e3023;
+    --green: #2dff6e;
+    --green-dim: #1a9940;
+    --green-glow: rgba(45,255,110,0.12);
+    --text: #e8f5eb;
+    --muted: #6b8f72;
+    --accent: #ff6b35;
+    --blue: #4fc3f7;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; overflow-x: hidden; }
+
+  /* GRID LAYOUT */
+  .app { min-height: 100vh; display: flex; flex-direction: column; }
+  .topbar { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px 12px; border-bottom: 1px solid var(--border); background: var(--surface); position: sticky; top: 0; z-index: 100; }
+  .logo { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 800; color: var(--green); letter-spacing: -0.5px; display: flex; align-items: center; gap: 8px; }
+  .logo-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(1.3)} }
+  .topbar-right { display: flex; align-items: center; gap: 10px; }
+  .time-display { font-family: 'Syne', sans-serif; font-size: 13px; color: var(--muted); }
+
+  .main { flex: 1; padding: 16px; display: flex; flex-direction: column; gap: 14px; max-width: 480px; margin: 0 auto; width: 100%; }
+
+  /* HERO CARD */
+  .hero-card {
+    background: linear-gradient(135deg, var(--card) 0%, #0d1f11 100%);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero-card::before {
+    content: '';
+    position: absolute;
+    top: -40px; right: -40px;
+    width: 160px; height: 160px;
+    background: radial-gradient(circle, var(--green-glow) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .greeting { font-size: 13px; color: var(--muted); margin-bottom: 4px; }
+  .hero-name { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 700; color: var(--text); }
+  .hero-sub { font-size: 12px; color: var(--green-dim); margin-top: 2px; font-weight: 500; }
+  .weather-row { display: flex; align-items: center; gap: 16px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
+  .temp-big { font-family: 'Syne', sans-serif; font-size: 36px; font-weight: 800; color: var(--green); line-height: 1; }
+  .weather-info { flex: 1; }
+  .weather-desc { font-size: 13px; color: var(--text); }
+  .weather-loc { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .weather-loading { font-size: 12px; color: var(--muted); animation: blink 1.5s infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  /* SECTION TITLES */
+  .section-label { font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 700; color: var(--muted); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: -4px; }
+
+  /* NEWS CARD */
+  .news-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 16px; }
+  .news-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .news-title { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; }
+  .badge { font-size: 10px; background: var(--green-glow); color: var(--green); border: 1px solid var(--green-dim); border-radius: 20px; padding: 2px 8px; }
+  .news-item { padding: 10px 0; border-bottom: 1px solid var(--border); cursor: pointer; transition: opacity 0.2s; }
+  .news-item:last-child { border-bottom: none; padding-bottom: 0; }
+  .news-item:hover { opacity: 0.75; }
+  .news-cat { font-size: 10px; color: var(--accent); font-weight: 600; letter-spacing: 0.5px; margin-bottom: 3px; }
+  .news-headline { font-size: 13px; color: var(--text); line-height: 1.4; }
+  .news-time { font-size: 11px; color: var(--muted); margin-top: 3px; }
+
+  /* SUMMARY CARDS ROW */
+  .cards-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .mini-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 16px; position: relative; overflow: hidden; cursor: pointer; transition: border-color 0.2s; }
+  .mini-card:hover { border-color: var(--green-dim); }
+  .mini-card-icon { font-size: 22px; margin-bottom: 8px; }
+  .mini-card-label { font-size: 11px; color: var(--muted); font-weight: 500; }
+  .mini-card-count { font-family: 'Syne', sans-serif; font-size: 24px; font-weight: 800; color: var(--text); line-height: 1.1; }
+  .mini-card-sub { font-size: 11px; color: var(--green); margin-top: 4px; }
+  .mini-card-urgent { font-size: 11px; color: var(--accent); margin-top: 4px; }
+  .mini-card-badge { position: absolute; top: 12px; right: 12px; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+
+  /* BIO CARD */
+  .bio-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 16px; }
+  .bio-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .bio-title { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; }
+  .bio-fact { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .bio-fact:last-child { border-bottom: none; padding-bottom: 0; }
+  .bio-fact-emoji { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+  .bio-fact-text { font-size: 13px; color: var(--text); line-height: 1.5; }
+  .bio-fact-source { font-size: 10px; color: var(--muted); margin-top: 2px; }
+
+  /* TASKS */
+  .tasks-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 16px; }
+  .task-item { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); cursor: pointer; }
+  .task-item:last-child { border-bottom: none; padding-bottom: 0; }
+  .task-check { width: 18px; height: 18px; border: 2px solid var(--border); border-radius: 50%; flex-shrink: 0; transition: all 0.2s; display: flex; align-items: center; justify-content: center; }
+  .task-item.done .task-check { background: var(--green); border-color: var(--green); }
+  .task-item.done .task-check::after { content: '✓'; font-size: 10px; color: #000; font-weight: 700; }
+  .task-item.done .task-text { text-decoration: line-through; color: var(--muted); }
+  .task-text { font-size: 13px; color: var(--text); flex: 1; }
+  .task-due { font-size: 10px; color: var(--muted); }
+  .task-due.urgent { color: var(--accent); }
+
+  /* ASK CLAUDE */
+  .ask-card { background: linear-gradient(135deg, #0d1a16, #0a1510); border: 1px solid var(--green-dim); border-radius: 16px; padding: 16px; }
+  .ask-label { font-size: 12px; color: var(--green); font-weight: 600; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+  .ask-input-row { display: flex; gap: 8px; }
+  .ask-input { flex: 1; background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 12px; padding: 10px 14px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 13px; outline: none; }
+  .ask-input::placeholder { color: var(--muted); }
+  .ask-input:focus { border-color: var(--green-dim); }
+  .ask-btn { background: var(--green); color: #000; border: none; border-radius: 12px; padding: 10px 16px; font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap; transition: opacity 0.2s; }
+  .ask-btn:hover { opacity: 0.85; }
+  .ask-response { margin-top: 12px; padding: 12px; background: rgba(255,255,255,0.03); border-radius: 10px; font-size: 13px; color: var(--text); line-height: 1.6; display: none; }
+  .ask-response.show { display: block; }
+  .ask-thinking { color: var(--muted); animation: blink 1.2s infinite; }
+
+  /* EMAIL PREVIEW */
+  .email-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 16px; }
+  .email-item { padding: 10px 0; border-bottom: 1px solid var(--border); display: flex; gap: 10px; align-items: flex-start; }
+  .email-item:last-child { border-bottom: none; padding-bottom: 0; }
+  .email-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--border); display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+  .email-body { flex: 1; min-width: 0; }
+  .email-sender { font-size: 12px; font-weight: 600; color: var(--text); }
+  .email-subject { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
+  .email-tag { display: inline-block; font-size: 9px; font-weight: 700; letter-spacing: 0.5px; padding: 2px 6px; border-radius: 20px; margin-top: 4px; }
+  .tag-study { background: rgba(79,195,247,0.15); color: var(--blue); border: 1px solid rgba(79,195,247,0.3); }
+  .tag-delete { background: rgba(255,107,53,0.15); color: var(--accent); border: 1px solid rgba(255,107,53,0.3); }
+  .tag-job { background: rgba(45,255,110,0.1); color: var(--green); border: 1px solid var(--green-dim); }
+
+  /* HOURLY SUMMARY */
+  .summary-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 16px; }
+  .summary-text { font-size: 13px; color: var(--text); line-height: 1.7; }
+  .summary-updated { font-size: 11px; color: var(--muted); margin-top: 8px; display: flex; align-items: center; gap: 4px; }
+  .live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: pulse 1.5s infinite; display: inline-block; }
+
+  /* BOTTOM NAV */
+  .bottom-nav { position: sticky; bottom: 0; background: var(--surface); border-top: 1px solid var(--border); display: flex; padding: 10px 0 max(10px, env(safe-area-inset-bottom)); }
+  .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 4px; cursor: pointer; opacity: 0.5; transition: opacity 0.2s; }
+  .nav-item.active { opacity: 1; }
+  .nav-icon { font-size: 20px; }
+  .nav-label { font-size: 10px; color: var(--muted); font-weight: 500; }
+  .nav-item.active .nav-label { color: var(--green); }
+
+  /* REFRESH BTN */
+  .refresh-btn { background: transparent; border: 1px solid var(--border); border-radius: 8px; padding: 5px 10px; color: var(--muted); font-size: 11px; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.2s; }
+  .refresh-btn:hover { border-color: var(--green-dim); color: var(--green); }
+
+  .spinning { animation: spin 0.8s linear infinite; }
+  @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+
+  /* SCROLL SECTIONS */
+  .section { display: flex; flex-direction: column; gap: 14px; }
+  .section.hidden { display: none; }
+
+  /* WHATSAPP PLACEHOLDER */
+  .wa-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 20px; text-align: center; }
+  .wa-icon { font-size: 40px; margin-bottom: 10px; }
+  .wa-title { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+  .wa-desc { font-size: 12px; color: var(--muted); line-height: 1.6; }
+  .wa-btn { display: inline-block; margin-top: 12px; background: #25D366; color: #000; font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 700; padding: 10px 20px; border-radius: 12px; text-decoration: none; }
+
+  /* fade in */
+  @keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+  .main > * { animation: fadeUp 0.4s ease both; }
+  .main > *:nth-child(1){animation-delay:0.05s}
+  .main > *:nth-child(2){animation-delay:0.1s}
+  .main > *:nth-child(3){animation-delay:0.15s}
+  .main > *:nth-child(4){animation-delay:0.2s}
+  .main > *:nth-child(5){animation-delay:0.25s}
+  .main > *:nth-child(6){animation-delay:0.3s}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="logo"><div class="logo-dot"></div>BioAssist</div>
+    <div class="topbar-right">
+      <span class="time-display" id="clock"></span>
+      <button class="refresh-btn" id="refreshBtn" onclick="refreshAll()">↻ Atualizar</button>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div class="main" id="mainContent">
+
+    <!-- HERO -->
+    <div class="hero-card">
+      <div class="greeting" id="greetingText">Bom dia</div>
+      <div class="hero-name">Licenciatura em Biologia 🌿</div>
+      <div class="hero-sub">Assistente pessoal ativo</div>
+      <div class="weather-row">
+        <div class="temp-big" id="tempDisplay"><span class="weather-loading">···</span></div>
+        <div class="weather-info">
+          <div class="weather-desc" id="weatherDesc">Carregando clima...</div>
+          <div class="weather-loc" id="weatherLoc">Obtendo localização</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RESUMO DO DIA (IA) -->
+    <div class="section-label">📋 Resumo do dia</div>
+    <div class="summary-card">
+      <div class="summary-text" id="dailySummary">
+        <span class="weather-loading">Gerando resumo personalizado...</span>
+      </div>
+      <div class="summary-updated">
+        <span class="live-dot"></span>
+        <span id="summaryTime">Atualizado agora</span>
+      </div>
+    </div>
+
+    <!-- PERGUNTE À IA -->
+    <div class="ask-card">
+      <div class="ask-label">🧬 Perguntar ao Assistente</div>
+      <div class="ask-input-row">
+        <input class="ask-input" id="askInput" placeholder="Ex: Explique fotossíntese..." onkeypress="if(event.key==='Enter')askClaude()">
+        <button class="ask-btn" onclick="askClaude()">Enviar</button>
+      </div>
+      <div class="ask-response" id="askResponse"></div>
+    </div>
+
+    <!-- CARDS ROW -->
+    <div class="cards-row">
+      <div class="mini-card" onclick="showSection('email')">
+        <div class="mini-card-badge"></div>
+        <div class="mini-card-icon">📧</div>
+        <div class="mini-card-label">Gmail</div>
+        <div class="mini-card-count" id="emailCount">—</div>
+        <div class="mini-card-sub" id="emailSub">Conecte o Gmail</div>
+      </div>
+      <div class="mini-card" onclick="showSection('whatsapp')">
+        <div class="mini-card-icon">💬</div>
+        <div class="mini-card-label">WhatsApp</div>
+        <div class="mini-card-count">—</div>
+        <div class="mini-card-urgent">Integração manual</div>
+      </div>
+    </div>
+
+    <!-- NOTÍCIAS -->
+    <div class="section-label">🌍 Notícias do Mundo</div>
+    <div class="news-card">
+      <div class="news-header">
+        <div class="news-title">Últimas notícias</div>
+        <div class="badge" id="newsBadge">Carregando</div>
+      </div>
+      <div id="newsList"><div style="padding:10px 0;color:var(--muted);font-size:13px;"><span class="weather-loading">Buscando notícias...</span></div></div>
+    </div>
+
+    <!-- BIO DA ÁREA -->
+    <div class="section-label">🔬 Sua Área — Biologia</div>
+    <div class="bio-card">
+      <div class="bio-header">
+        <div class="bio-title">Ciências Biológicas hoje</div>
+        <button class="refresh-btn" onclick="loadBioFacts()">↻</button>
+      </div>
+      <div id="bioFacts"><div style="padding:10px 0;color:var(--muted);font-size:13px;"><span class="weather-loading">Carregando curiosidades...</span></div></div>
+    </div>
+
+    <!-- TAREFAS -->
+    <div class="section-label">✅ Tarefas da Faculdade</div>
+    <div class="tasks-card" id="tasksContainer">
+      <div class="task-item" onclick="toggleTask(this)">
+        <div class="task-check"></div>
+        <div class="task-text">Revisar anotações de Ecologia</div>
+        <div class="task-due urgent">Hoje</div>
+      </div>
+      <div class="task-item" onclick="toggleTask(this)">
+        <div class="task-check"></div>
+        <div class="task-text">Ler capítulo de Genética</div>
+        <div class="task-due">Amanhã</div>
+      </div>
+      <div class="task-item" onclick="toggleTask(this)">
+        <div class="task-check"></div>
+        <div class="task-text">Entregar relatório de laboratório</div>
+        <div class="task-due urgent">Sex</div>
+      </div>
+      <div class="task-item" onclick="toggleTask(this)">
+        <div class="task-check"></div>
+        <div class="task-text">Preparar apresentação de Botânica</div>
+        <div class="task-due">Semana que vem</div>
+      </div>
+    </div>
+
+    <!-- EMAIL PREVIEW (hidden by default) -->
+    <div class="section-label" id="emailLabel" style="display:none">📧 Gmail — Classificação Automática</div>
+    <div class="email-card section hidden" id="emailSection">
+      <div style="text-align:center;padding:20px 0;color:var(--muted);font-size:13px;">
+        <div style="font-size:32px;margin-bottom:10px">📧</div>
+        <div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--text);margin-bottom:8px">Conecte seu Gmail</div>
+        <div style="line-height:1.6;font-size:12px">Após conectar, o assistente irá:<br>
+          🏷️ Etiquetar emails por categoria<br>
+          🗑️ Identificar emails para deletar<br>
+          📚 Separar conteúdos de estudo<br>
+          💼 Destacar vagas de emprego<br>
+          📝 Gerar resumos e respostas prontas
+        </div>
+        <div style="margin-top:14px;font-size:11px;color:var(--green)">Use o botão "Gmail" no menu do Claude para conectar</div>
+      </div>
+    </div>
+
+    <!-- WHATSAPP (hidden) -->
+    <div class="section hidden" id="whatsappSection">
+      <div class="wa-card">
+        <div class="wa-icon">💬</div>
+        <div class="wa-title">WhatsApp</div>
+        <div class="wa-desc">
+          O WhatsApp não possui API oficial para leitura automática de mensagens.<br><br>
+          <strong style="color:var(--text)">O que você pode fazer:</strong><br>
+          Copie mensagens recebidas e cole aqui para gerar respostas prontas automaticamente com IA.
+        </div>
+        <div style="margin-top:14px">
+          <textarea id="waInput" style="width:100%;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:10px;padding:10px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;resize:none;outline:none;min-height:80px" placeholder="Cole aqui a mensagem que recebeu..."></textarea>
+          <button onclick="generateWAReply()" style="width:100%;margin-top:8px;background:var(--green);color:#000;border:none;border-radius:10px;padding:10px;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;cursor:pointer">Gerar Resposta Pronta</button>
+          <div id="waReply" style="display:none;margin-top:10px;padding:12px;background:rgba(255,255,255,0.03);border-radius:10px;font-size:13px;color:var(--text);line-height:1.6"></div>
+        </div>
+      </div>
+    </div>
+
+    <div style="height:20px"></div>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <div class="bottom-nav">
+    <div class="nav-item active" onclick="setNav(this,'home')">
+      <div class="nav-icon">🏠</div>
+      <div class="nav-label">Início</div>
+    </div>
+    <div class="nav-item" onclick="setNav(this,'email')">
+      <div class="nav-icon">📧</div>
+      <div class="nav-label">Gmail</div>
+    </div>
+    <div class="nav-item" onclick="setNav(this,'whatsapp')">
+      <div class="nav-icon">💬</div>
+      <div class="nav-label">WhatsApp</div>
+    </div>
+    <div class="nav-item" onclick="setNav(this,'tasks')">
+      <div class="nav-icon">✅</div>
+      <div class="nav-label">Tarefas</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const API_URL = "https://api.anthropic.com/v1/messages";
+const MODEL = "claude-sonnet-4-20250514";
+
+// CLOCK
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent = now.toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'});
+  const h = now.getHours();
+  document.getElementById('greetingText').textContent = h < 12 ? 'Bom dia ☀️' : h < 18 ? 'Boa tarde 🌤️' : 'Boa noite 🌙';
+}
+updateClock();
+setInterval(updateClock, 30000);
+
+// WEATHER
+async function loadWeather() {
+  if (!navigator.geolocation) return;
+  navigator.geolocation.getCurrentPosition(async pos => {
+    try {
+      const { latitude: lat, longitude: lon } = pos.coords;
+      const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&timezone=auto`);
+      const d = await r.json();
+      const temp = Math.round(d.current.temperature_2m);
+      const code = d.current.weather_code;
+      const desc = getWeatherDesc(code);
+      document.getElementById('tempDisplay').textContent = `${temp}°`;
+      document.getElementById('weatherDesc').textContent = desc;
+      document.getElementById('weatherLoc').textContent = 'Sua localização atual';
+    } catch(e) {
+      document.getElementById('tempDisplay').textContent = '—';
+      document.getElementById('weatherDesc').textContent = 'Clima indisponível';
+    }
+  }, () => {
+    document.getElementById('tempDisplay').textContent = '—';
+    document.getElementById('weatherDesc').textContent = 'Permita localização';
+  });
+}
+
+function getWeatherDesc(code) {
+  if (code === 0) return 'Céu limpo ☀️';
+  if (code <= 3) return 'Parcialmente nublado 🌤️';
+  if (code <= 48) return 'Nublado ☁️';
+  if (code <= 67) return 'Chuva 🌧️';
+  if (code <= 77) return 'Neve ❄️';
+  if (code <= 82) return 'Chuva forte 🌧️';
+  return 'Tempestade ⛈️';
+}
+
+// DAILY SUMMARY via Claude AI
+async function loadDailySummary() {
+  const el = document.getElementById('dailySummary');
+  const now = new Date();
+  const timeStr = now.toLocaleString('pt-BR');
+  try {
+    const r = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: MODEL, max_tokens: 1000,
+        messages: [{
+          role: 'user',
+          content: `Você é um assistente pessoal. Gere um RESUMO DO DIA muito breve e motivador para um estudante de Licenciatura em Ciências Biológicas no Brasil. Data/hora atual: ${timeStr}. Inclua: 1 dica de estudo de biologia, 1 lembrete de autocuidado, e 1 frase motivadora curta. Seja conciso, máximo 4 linhas. Use emojis com moderação. Responda em português.`
+        }]
+      })
+    });
+    const d = await r.json();
+    el.textContent = d.content[0].text;
+    document.getElementById('summaryTime').textContent = `Atualizado às ${now.toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'})}`;
+  } catch(e) {
+    el.textContent = '🌿 Bom dia! Foque nos seus estudos hoje. Cada página lida é um passo na sua carreira de biólogo. Você consegue! 💪';
+  }
+}
+
+// NEWS via Claude AI
+async function loadNews() {
+  const el = document.getElementById('newsList');
+  const badge = document.getElementById('newsBadge');
+  try {
+    const r = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: MODEL, max_tokens: 1000,
+        tools: [{ type: "web_search_20250305", name: "web_search" }],
+        messages: [{
+          role: 'user',
+          content: `Busque 3 notícias relevantes de hoje. Misture: 1 notícia de ciência/biologia/meio ambiente, 1 notícia de educação ou emprego no Brasil, 1 notícia geral importante. Responda APENAS em JSON, sem markdown, no formato: {"news":[{"cat":"Categoria","headline":"Título curto","time":"X min atrás"}]}. Responda em português.`
+        }]
+      })
+    });
+    const d = await r.json();
+    const fullText = d.content.map(i => i.text || '').join('');
+    const clean = fullText.replace(/```json|```/g, '').trim();
+    let parsed;
+    try { parsed = JSON.parse(clean); } catch { throw new Error('parse'); }
+    const news = parsed.news || [];
+    el.innerHTML = news.map(n => `
+      <div class="news-item">
+        <div class="news-cat">${n.cat.toUpperCase()}</div>
+        <div class="news-headline">${n.headline}</div>
+        <div class="news-time">${n.time}</div>
+      </div>
+    `).join('');
+    badge.textContent = `${news.length} novas`;
+  } catch(e) {
+    el.innerHTML = '<div style="padding:10px 0;color:var(--muted);font-size:13px;">Conecte à internet para ver notícias</div>';
+    badge.textContent = 'Offline';
+  }
+}
+
+// BIO FACTS via Claude AI
+async function loadBioFacts() {
+  const el = document.getElementById('bioFacts');
+  el.innerHTML = '<div style="padding:10px 0;color:var(--muted);font-size:13px;"><span class="weather-loading">Carregando...</span></div>';
+  try {
+    const r = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: MODEL, max_tokens: 1000,
+        messages: [{
+          role: 'user',
+          content: `Gere 3 curiosidades ou informações relevantes de hoje para um estudante de Licenciatura em Ciências Biológicas no Brasil. Pode incluir: descoberta científica recente, conceito importante para estudar, oportunidade de emprego na área. Responda APENAS em JSON sem markdown: {"facts":[{"emoji":"🔬","text":"informação aqui","source":"Fonte ou área"}]}. Em português.`
+        }]
+      })
+    });
+    const d = await r.json();
+    const fullText = d.content.map(i => i.text || '').join('');
+    const clean = fullText.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(clean);
+    const facts = parsed.facts || [];
+    el.innerHTML = facts.map(f => `
+      <div class="bio-fact">
+        <div class="bio-fact-emoji">${f.emoji}</div>
+        <div>
+          <div class="bio-fact-text">${f.text}</div>
+          <div class="bio-fact-source">${f.source}</div>
+        </div>
+      </div>
+    `).join('');
+  } catch(e) {
+    el.innerHTML = `
+      <div class="bio-fact"><div class="bio-fact-emoji">🌱</div><div><div class="bio-fact-text">A fotossíntese realizada por plantas e cianobactérias é responsável pela produção de ~50% do oxigênio do planeta.</div><div class="bio-fact-source">Botânica / Ecologia</div></div></div>
+      <div class="bio-fact"><div class="bio-fact-emoji">🧬</div><div><div class="bio-fact-text">O genoma humano contém cerca de 3 bilhões de pares de bases, mas apenas ~2% codificam proteínas.</div><div class="bio-fact-source">Genética Molecular</div></div></div>
+      <div class="bio-fact"><div class="bio-fact-emoji">💼</div><div><div class="bio-fact-text">Licenciados em Biologia podem atuar também como analistas ambientais em empresas e ONG's.</div><div class="bio-fact-source">Mercado de Trabalho</div></div></div>
+    `;
+  }
+}
+
+// ASK CLAUDE
+async function askClaude() {
+  const input = document.getElementById('askInput');
+  const responseEl = document.getElementById('askResponse');
+  const q = input.value.trim();
+  if (!q) return;
+  responseEl.className = 'ask-response show';
+  responseEl.innerHTML = '<span class="ask-thinking">Pensando...</span>';
+  try {
+    const r = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: MODEL, max_tokens: 1000,
+        messages: [{
+          role: 'user',
+          content: `Você é um assistente especializado em Ciências Biológicas e Licenciatura. Responda de forma clara e concisa para um estudante universitário. Pergunta: ${q}`
+        }]
+      })
+    });
+    const d = await r.json();
+    responseEl.textContent = d.content[0].text;
+    input.value = '';
+  } catch(e) {
+    responseEl.textContent = 'Erro ao conectar. Verifique sua internet.';
+  }
+}
+
+// WHATSAPP REPLY
+async function generateWAReply() {
+  const msg = document.getElementById('waInput').value.trim();
+  const replyEl = document.getElementById('waReply');
+  if (!msg) return;
+  replyEl.style.display = 'block';
+  replyEl.innerHTML = '<span class="weather-loading">Gerando resposta...</span>';
+  try {
+    const r = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: MODEL, max_tokens: 1000,
+        messages: [{
+          role: 'user',
+          content: `Gere uma resposta pronta e amigável para esta mensagem de WhatsApp que recebi: "${msg}". A resposta deve ser natural, em português, curta e direta. Forneça apenas o texto da resposta, sem explicações.`
+        }]
+      })
+    });
+    const d = await r.json();
+    replyEl.textContent = '💬 ' + d.content[0].text;
+  } catch(e) {
+    replyEl.textContent = 'Erro ao gerar resposta.';
+  }
+}
+
+// NAV
+function setNav(el, section) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  el.classList.add('active');
+  const emailSection = document.getElementById('emailSection');
+  const emailLabel = document.getElementById('emailLabel');
+  const waSection = document.getElementById('whatsappSection');
+  emailSection.classList.add('hidden');
+  emailLabel.style.display = 'none';
+  waSection.classList.add('hidden');
+  if (section === 'email') {
+    emailSection.classList.remove('hidden');
+    emailLabel.style.display = '';
+  } else if (section === 'whatsapp') {
+    waSection.classList.remove('hidden');
+  } else if (section === 'tasks') {
+    document.getElementById('tasksContainer').scrollIntoView({ behavior: 'smooth' });
+  }
+}
+
+function showSection(s) {
+  const navItems = document.querySelectorAll('.nav-item');
+  if (s === 'email') { navItems[1].click(); }
+  else if (s === 'whatsapp') { navItems[2].click(); }
+}
+
+// TASK TOGGLE
+function toggleTask(el) {
+  el.classList.toggle('done');
+}
+
+// REFRESH ALL
+async function refreshAll() {
+  const btn = document.getElementById('refreshBtn');
+  btn.textContent = '↻';
+  btn.querySelector ? null : null;
+  btn.style.opacity = '0.5';
+  btn.disabled = true;
+  await Promise.allSettled([loadWeather(), loadDailySummary(), loadNews(), loadBioFacts()]);
+  btn.textContent = '↻ Atualizar';
+  btn.style.opacity = '';
+  btn.disabled = false;
+}
+
+// HOURLY AUTO REFRESH
+setInterval(refreshAll, 3600000);
+
+// INIT
+loadWeather();
+loadDailySummary();
+loadNews();
+loadBioFacts();
+</script>
+</body>
+</html>
